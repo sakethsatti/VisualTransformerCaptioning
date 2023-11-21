@@ -10,4 +10,5 @@ Visual Transformer code from https://github.com/tahmid0007/VisualTransformers
 
 ### Visual Transformer in Depth 
 ![VT_in_depthl](https://github.com/tahmid0007/VisualTransformers/blob/main/Overview.png)
+
 [source](https://github.com/tahmid0007/VisualTransformers)
