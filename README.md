@@ -4,5 +4,10 @@ This is an independent research project to test the efficacy of Visual Transform
 Visual Transformer paper: https://arxiv.org/abs/2006.03677
 Visual Transformer code from https://github.com/tahmid0007/VisualTransformers
 
-Model Overview:
+## Visual Diagrams of Model
+### Model Overview
 ![image_of_model](./model_diagram.png)
+
+### Visual Transformer in Depth 
+![VT_in_depthl](https://github.com/tahmid0007/VisualTransformers/blob/main/Overview.png)
+[source](https://github.com/tahmid0007/VisualTransformers)
