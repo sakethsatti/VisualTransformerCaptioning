@@ -33,7 +33,7 @@ class MultiHeadAttention(nn.Module):
         scaled_attention, attention_weights = self.scaled_dot_product_attention(q, k, v, mask)
         scaled_attention = scaled_attention.permute(0, 2, 1, 3)  # (batch_size, seq_len_q, num_heads, depth)
 
-        concat_attention = scaled_attention.contiguous().view(batch_size, -1, self.d_model)  # (batch_size, seq_len_q, d_model)
+        concat_attention = scaled_attention.contiguous().view(batch_size,-1, self.d_model)  # (batch_size, seq_len_q, d_model)
 
         output = self.dense(concat_attention)  # (batch_size, seq_len_q, d_model)
         return output, attention_weights
