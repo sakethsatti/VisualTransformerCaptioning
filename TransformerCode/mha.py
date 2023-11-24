@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
@@ -58,3 +57,18 @@ class MultiHeadAttention(nn.Module):
         output = torch.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
 
         return output, attention_weights
+    
+
+class PointWiseFeedForwardNetwork(nn.Module):
+    def __init__(self, d_model, d_ff):
+        super(PointWiseFeedForwardNetwork, self).__init__()
+        self.linear1 = nn.Linear(d_model, d_ff)
+        self.relu = nn.ReLU()
+        self.linear2 = nn.Linear(d_ff, d_model)
+
+    def forward(self, x):
+        # x shape: (batch_size, seq_len, d_model)
+        out = self.linear1(x)
+        out = self.relu(out)
+        out = self.linear2(out)
+        return out
