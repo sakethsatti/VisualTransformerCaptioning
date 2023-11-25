@@ -23,7 +23,13 @@ class Decoder(nn.Module):
       x = self.embedding(x)  # (batch_size, target_seq_len, d_model)
       x *= torch.sqrt(torch.tensor(self.d_model, dtype=torch.float32))
       x += self.pos_encoding[:, :seq_len, :]
-      x = self.dropout(x, training=training)
+      
+      if training:
+         self.dropout.train()
+      else:
+         self.dropout.eval()
+
+      x = self.dropout(x)
 
       for i in range(self.num_layers):
          x, block1, block2 = self.dec_layers[i](x, enc_output, training,
