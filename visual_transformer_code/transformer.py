@@ -1,8 +1,8 @@
 from torch import nn
-from attention import Attention
-from mlp import MLP_Block
-from layernorm import LayerNormalize
-from residual import Residual
+from visual_transformer_code.attention import Attention
+from visual_transformer_code.mlp import MLP_Block
+from visual_transformer_code.layernorm import LayerNormalize
+from visual_transformer_code.residual import Residual
 
 class Transformer(nn.Module):
     def __init__(self, dim, depth, heads, mlp_dim, dropout):

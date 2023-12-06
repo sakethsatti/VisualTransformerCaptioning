@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from einops import rearrange
 from torch import nn
 import torch.nn.init as init
-from transformer import Transformer
+from visual_transformer_code.transformer import Transformer
 
 def _weights_init(m):
     classname = m.__class__.__name__
