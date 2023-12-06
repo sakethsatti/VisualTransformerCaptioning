@@ -12,7 +12,7 @@ def _weights_init(m):
         init.kaiming_normal_(m.weight)
 
 class ViTResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10, dim = 128, num_tokens = 8, mlp_dim = 256, heads = 8, depth = 6, emb_dropout = 0.1, dropout= 0.1, BATCH_SIZE_TRAIN = 150):
+    def __init__(self, block, num_blocks, num_classes=397, dim = 128, num_tokens = 8, mlp_dim = 256, heads = 8, depth = 6, emb_dropout = 0.1, dropout= 0.1, BATCH_SIZE_TRAIN = 150):
         super(ViTResNet, self).__init__()
         self.in_planes = 16
         self.L = num_tokens
