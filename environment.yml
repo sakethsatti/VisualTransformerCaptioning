@@ -82,4 +82,4 @@ dependencies:
       - torchvision==0.16.1
       - triton==2.1.0
       - urllib3==1.26.13
-prefix: /home/anaconda3/envs/VTCaptioningEnv
+prefix: /home/miniconda3/envs/VTCaptioningEnv
