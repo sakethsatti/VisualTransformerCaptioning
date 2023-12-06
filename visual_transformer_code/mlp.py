@@ -13,3 +13,11 @@ class MLP_Block(nn.Module):
         torch.nn.init.xavier_uniform_(self.nn2.weight)
         torch.nn.init.normal_(self.nn2.bias, std = 1e-6)
         self.do2 = nn.Dropout(dropout)
+    def forward(self, x):
+        x = self.nn1(x)
+        x = self.af1(x)
+        x = self.do1(x)
+        x = self.nn2(x)
+        x = self.do2(x)
+        
+        return x
