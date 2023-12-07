@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import time
 from visual_transformer_code.vt import ViTResNet
 from visual_transformer_code.basicblock import BasicBlock
+import json
 
 BATCH_SIZE_TRAIN = 150
 BATCH_SIZE_TEST = 150
@@ -94,5 +95,6 @@ if __name__ == "__main__":
         evaluate(model, test_loader, test_loss_history)
 
     print('Execution time')
-
+    
     torch.save(model.state_dict(), MODEL_PATH)
+    json.dump({"train_loss_history": train_loss_history, "test_loss_history": test_loss_history}, open("loss_history.json", 'w'))
