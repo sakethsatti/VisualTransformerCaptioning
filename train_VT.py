@@ -14,7 +14,7 @@ DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
 N_EPOCHS = 150
 MODEL_PATH = "ViTRes.pt"
-LR = 0.01
+LR = 0.03
 
 transform = torchvision.transforms.Compose([
      torchvision.transforms.Resize((350, 350)),
@@ -38,6 +38,9 @@ def train(model, optimizer, data_loader, loss_history):
     model.train()
 
     for i, (data, target) in enumerate(data_loader):
+        if i * len(data) >= 87000:
+            break
+
         data = data.to(DEVICE_NAME)
         target = target.to(DEVICE_NAME)
         optimizer.zero_grad()
@@ -95,18 +98,6 @@ if __name__ == "__main__":
         train(model, optimizer, train_loader, train_loss_history)
         print('Execution time:', '{:5.2f}'.format(time.time() - start_time), 'seconds')
         evaluate(model, test_loader, test_loss_history)
-
-        current_loss = test_loss_history[-1]
-
-        if len(test_loss_history) >= 11:
-            if current_loss >= sum(test_loss_history[-11:-1])/10:
-                if LR < 0.00001:
-                    break
-
-                for param_group in optimizer.param_groups:
-                    param_group['lr'] *= 0.1    
-
-        print(train_loss_history)
 
     print('Execution time')
     
