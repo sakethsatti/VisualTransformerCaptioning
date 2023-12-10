@@ -81,6 +81,8 @@ if __name__ == "__main__":
     model = ViTResNet(BasicBlock, [3, 3, 3])
     model = model.to(DEVICE_NAME)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.003)
+    
+    unchanged_epochs = 0
 
     #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,momentum=.9,weight_decay=1e-4)
     #lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[35,48],gamma = 0.1)
@@ -93,6 +95,20 @@ if __name__ == "__main__":
         train(model, optimizer, train_loader, train_loss_history)
         print('Execution time:', '{:5.2f}'.format(time.time() - start_time), 'seconds')
         evaluate(model, test_loader, test_loss_history)
+
+        current_loss = test_loss_history[-1]
+
+        if current_loss >= prev_loss:
+            unchanged_epochs += 1
+            if unchanged_epochs >= 3:
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] *= 0.1
+                unchanged_epochs = 0 
+        else:
+            unchanged_epochs = 0 
+            prev_loss = current_loss
+
+        print(train_loss_history)
 
     print('Execution time')
     
