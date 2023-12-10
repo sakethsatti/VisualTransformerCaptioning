@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
         current_loss = test_loss_history[-1]
 
-        if len(test_loss_history) >= 10:
+        if len(test_loss_history) >= 11:
             if current_loss >= sum(test_loss_history[-11:-1])/10:
                 if LR < 0.00001:
                     break
