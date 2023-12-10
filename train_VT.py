@@ -98,12 +98,13 @@ if __name__ == "__main__":
 
         current_loss = test_loss_history[-1]
 
-        if current_loss >= sum(test_loss_history[-6:-1])/10:
-            if LR < 0.00001:
-                break
+        if len(test_loss_history) >= 10:
+            if current_loss >= sum(test_loss_history[-11:-1])/10:
+                if LR < 0.00001:
+                    break
 
-            for param_group in optimizer.param_groups:
-                param_group['lr'] *= 0.1    
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] *= 0.1    
 
         print(train_loss_history)
 
