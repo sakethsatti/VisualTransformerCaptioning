@@ -14,6 +14,7 @@ DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
 N_EPOCHS = 150
 MODEL_PATH = "ViTRes.pt"
+LR = 0.01
 
 transform = torchvision.transforms.Compose([
      torchvision.transforms.Resize((350, 350)),
@@ -80,10 +81,8 @@ def evaluate(model, data_loader, loss_history):
 if __name__ == "__main__":
     model = ViTResNet(BasicBlock, [3, 3, 3])
     model = model.to(DEVICE_NAME)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.003)
     
-    unchanged_epochs = 0
-    prev_loss = 10000
+    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
     #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,momentum=.9,weight_decay=1e-4)
     #lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[35,48],gamma = 0.1)
@@ -99,15 +98,12 @@ if __name__ == "__main__":
 
         current_loss = test_loss_history[-1]
 
-        if current_loss >= prev_loss:
-            unchanged_epochs += 1
-            if unchanged_epochs >= 3:
-                for param_group in optimizer.param_groups:
-                    param_group['lr'] *= 0.1
-                unchanged_epochs = 0 
-        else:
-            unchanged_epochs = 0 
-            prev_loss = current_loss
+        if current_loss >= sum(test_loss_history[-6:-1])/5:
+            if LR < 0.00001:
+                break
+
+            for param_group in optimizer.param_groups:
+                param_group['lr'] *= 0.1    
 
         print(train_loss_history)
 
