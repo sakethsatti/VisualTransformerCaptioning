@@ -4,7 +4,7 @@ from torch.utils.data import random_split
 import torch.nn.functional as F
 import time
 from visual_transformer_code.vt import ViTResNet
-from visual_transformer_code.basicblock import BasicBlock
+from visual_transformer_code.basicblock import BasicBlock, Bottleneck
 import json
 
 BATCH_SIZE_TRAIN = 25
@@ -87,7 +87,7 @@ def evaluate(model, data_loader, loss_history):
 
 
 if __name__ == "__main__":
-    model = ViTResNet(BasicBlock, [2, 3, 3, 3])
+    model = ViTResNet(BasicBlock, Bottleneck, [2, 3, 3, 3])
     model = model.to(DEVICE_NAME)
     
     #optimizer = torch.optim.Adam(model.parameters(), lr=LR)
