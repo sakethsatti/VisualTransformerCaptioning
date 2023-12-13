@@ -87,7 +87,7 @@ def evaluate(model, data_loader, loss_history):
 
 
 if __name__ == "__main__":
-    model = ViTResNet(BasicBlock, [3, 3, 3])
+    model = ViTResNet(BasicBlock, [2, 3, 3, 3])
     model = model.to(DEVICE_NAME)
     
     #optimizer = torch.optim.Adam(model.parameters(), lr=LR)
