@@ -14,7 +14,7 @@ DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
 N_EPOCHS = 150
 MODEL_PATH = "ViTRes.pt"
-LR = 0.1
+LR = 0.01
 
 transform = torchvision.transforms.Compose([
      torchvision.transforms.Resize((350, 350)),
