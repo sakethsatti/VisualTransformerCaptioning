@@ -7,14 +7,14 @@ from visual_transformer_code.vt import ViTResNet
 from visual_transformer_code.basicblock import BasicBlock
 import json
 
-BATCH_SIZE_TRAIN = 32
-BATCH_SIZE_TEST = 32
+BATCH_SIZE_TRAIN = 25
+BATCH_SIZE_TEST = 25
 TRAIN_RATIO = 0.8
 DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
-N_EPOCHS = 50
-MODEL_PATH = "../ViTRes.pt"
-LR = 0.01
+N_EPOCHS = 150
+MODEL_PATH = "ViTRes.pt"
+LR = 0.1
 
 transform = torchvision.transforms.Compose([
      torchvision.transforms.Resize((350, 350)),
@@ -54,29 +54,25 @@ def train(model, optimizer, data_loader, loss_history):
                 
             loss_history.append(loss.item())
         except RuntimeError:
-            pass
+            break
 
 def evaluate(model, data_loader, loss_history):
-    
     model.eval()
 
-    total_samples = len(data_loader.dataset) - 1
+    total_samples = len(data_loader.dataset)
     correct_samples = 0
     total_loss = 0
 
     with torch.no_grad():
         for data, target in data_loader:
-            try:
-                data = data.to(DEVICE_NAME)
-                target = target.to(DEVICE_NAME)
-                output = F.log_softmax(model(data), dim=1)
-                loss = F.nll_loss(output, target, reduction='sum')
-                _, pred = torch.max(output, dim=1)
-                
-                total_loss += loss.item()
-                correct_samples += pred.eq(target).sum()
-            except RuntimeError:
-                pass
+            data = data.to(DEVICE_NAME)
+            target = target.to(DEVICE_NAME)
+            output = F.log_softmax(model(data), dim=1)
+            loss = F.nll_loss(output, target, reduction='sum')
+            _, pred = torch.max(output, dim=1)
+
+            total_loss += loss.item()
+            correct_samples += pred.eq(target).sum()
 
     avg_loss = total_loss / total_samples
     loss_history.append(avg_loss)
@@ -87,7 +83,7 @@ def evaluate(model, data_loader, loss_history):
 
 
 if __name__ == "__main__":
-    model = ViTResNet(BasicBlock, [2, 3, 3, 3])
+    model = ViTResNet(BasicBlock, [3, 3, 3])
     model = model.to(DEVICE_NAME)
     
     #optimizer = torch.optim.Adam(model.parameters(), lr=LR)
@@ -104,15 +100,15 @@ if __name__ == "__main__":
         print('Execution time:', '{:5.2f}'.format(time.time() - start_time), 'seconds')
         evaluate(model, test_loader, test_loss_history)
 
-        if epoch % 10 == 0:
+        if epoch % 30 == 0:
             for param_group in optimizer.param_groups:
                 param_group['lr'] *= 0.1
-            try:
-                print('New LR rate:' + param_group[0]['lr'])
-            except:
-                pass    
+
+            print('New LR rate:' + param_group[1]['lr'])    
+
+        print('Train Loss History:' + train_loss_history)
 
     print('Execution time')
     
     torch.save(model.state_dict(), MODEL_PATH)
-    json.dump({"train_loss_history": train_loss_history, "test_loss_history": test_loss_history}, open("../loss_history.json", 'w'))
+    json.dump({"train_loss_history": train_loss_history, "test_loss_history": test_loss_history}, open("loss_history.json", 'w'))
