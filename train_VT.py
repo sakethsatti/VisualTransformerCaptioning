@@ -100,9 +100,11 @@ if __name__ == "__main__":
         print('Execution time:', '{:5.2f}'.format(time.time() - start_time), 'seconds')
         evaluate(model, test_loader, test_loss_history)
 
-        if epoch % 30 == 0:
+        if epoch % 5 == 0:
             for param_group in optimizer.param_groups:
                 param_group['lr'] *= 0.1
+
+            torch.save(model.state_dict(), MODEL_PATH)
 
             print('New LR rate:' + param_group[1]['lr'])    
 
