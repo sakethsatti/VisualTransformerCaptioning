@@ -14,7 +14,7 @@ DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
 N_EPOCHS = 150
 MODEL_PATH = "ViTRes.pt"
-LR = 0.1
+LR = 0.01
 
 transform = torchvision.transforms.Compose([
      torchvision.transforms.Resize((350, 350)),
@@ -38,23 +38,22 @@ def train(model, optimizer, data_loader, loss_history):
     model.train()
 
     for i, (data, target) in enumerate(data_loader):
-        try:
-            data = data.to(DEVICE_NAME)
-            target = target.to(DEVICE_NAME)
-            optimizer.zero_grad()
-            output = F.log_softmax(model(data), dim=1)
-            loss = F.nll_loss(output, target)
-            loss.backward()
-            optimizer.step()
+        if i * len(data) >= 87000:
+            break
 
-            if i % 100 == 0:
-                print('[' +  '{:5}'.format(i * len(data)) + '/' + '{:5}'.format(total_samples) +
+        data = data.to(DEVICE_NAME)
+        target = target.to(DEVICE_NAME)
+        optimizer.zero_grad()
+        output = F.log_softmax(model(data), dim=1)
+        loss = F.nll_loss(output, target)
+        loss.backward()
+        optimizer.step()
+
+        if i % 100 == 0:
+            print('[' +  '{:5}'.format(i * len(data)) + '/' + '{:5}'.format(total_samples) +
                   ' (' + '{:3.0f}'.format(100 * i / len(data_loader)) + '%)]  Loss: ' +
                   '{:6.4f}'.format(loss.item()))
-                
             loss_history.append(loss.item())
-        except RuntimeError:
-            break
 
 def evaluate(model, data_loader, loss_history):
     model.eval()
@@ -86,9 +85,9 @@ if __name__ == "__main__":
     model = ViTResNet(BasicBlock, [3, 3, 3])
     model = model.to(DEVICE_NAME)
     
-    #optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
-    optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=.9,weight_decay=4e-5, nesterov=True)
+    #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate,momentum=.9,weight_decay=1e-4)
     #lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[35,48],gamma = 0.1)
 
     train_loss_history, test_loss_history = [], []
@@ -100,13 +99,19 @@ if __name__ == "__main__":
         print('Execution time:', '{:5.2f}'.format(time.time() - start_time), 'seconds')
         evaluate(model, test_loader, test_loss_history)
 
-        if epoch % 30 == 0:
-            for param_group in optimizer.param_groups:
-                param_group['lr'] *= 0.1
+        current_loss = test_loss_history[-1]
 
-            print('New LR rate:' + param_group[1]['lr'])    
+        if len(test_loss_history) >= 11:
+            if current_loss >= sum(test_loss_history[-11:-1])/10:
+                if LR < 0.00001:
+                    break
 
-        print('Train Loss History:' + train_loss_history)
+                for param_group in optimizer.param_groups:
+                    param_group['lr'] *= 0.1    
+
+        print(train_loss_history)
+
+        print(train_loss_history)
 
     print('Execution time')
     
