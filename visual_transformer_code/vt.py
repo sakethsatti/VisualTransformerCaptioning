@@ -23,6 +23,8 @@ class ViTResNet(nn.Module):
         self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2) #8x8 feature maps (64 in total)
+        self.layer4 = self._make_layer(block, 64, num_blocks[3], stride=2)
+        self.layer5 = self._make_layer(block, 64, num_blocks[3], stride=2)
         self.apply(_weights_init)
 
 
@@ -66,6 +68,8 @@ class ViTResNet(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.layer5(x)
 
         x = rearrange(x, 'b c h w -> b (h w) c') # 64 vectors each with 64 points. These are the sequences or word vecotrs like in NLP
 
