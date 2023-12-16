@@ -12,7 +12,7 @@ def _weights_init(m):
         init.kaiming_normal_(m.weight)
 
 class ViTResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=397, dim = 128, num_tokens = 16, mlp_dim = 256, heads = 16, depth = 6, emb_dropout = 0.2, dropout= 0.2, BATCH_SIZE_TRAIN = 32):
+    def __init__(self, block, num_blocks, num_classes=397, dim = 128, num_tokens = 8, mlp_dim = 256, heads = 8, depth = 6, emb_dropout = 0.1, dropout= 0.1, BATCH_SIZE_TRAIN = 25):
         super(ViTResNet, self).__init__()
         self.in_planes = 16
         self.L = num_tokens
@@ -23,7 +23,6 @@ class ViTResNet(nn.Module):
         self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2) #8x8 feature maps (64 in total)
-        self.layer4 = self._make_layer(block, 64, num_blocks[3], stride=2)
         self.apply(_weights_init)
 
 
@@ -67,7 +66,6 @@ class ViTResNet(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-        x = self.layer4(x)
 
         x = rearrange(x, 'b c h w -> b (h w) c') # 64 vectors each with 64 points. These are the sequences or word vecotrs like in NLP
 
