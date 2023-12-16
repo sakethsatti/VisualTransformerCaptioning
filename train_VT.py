@@ -7,8 +7,8 @@ from visual_transformer_code.vt import ViTResNet
 from visual_transformer_code.basicblock import BasicBlock
 import json
 
-BATCH_SIZE_TRAIN = 25
-BATCH_SIZE_TEST = 25
+BATCH_SIZE_TRAIN = 32
+BATCH_SIZE_TEST = 32
 TRAIN_RATIO = 0.8
 DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
