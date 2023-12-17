@@ -54,36 +54,43 @@ def train(model, optimizer, data_loader, loss_history):
                 
             loss_history.append(loss.item())
         except RuntimeError:
-            break
+            pass
 
-def evaluate(model, data_loader, loss_history):
+def evaluate(model, data_loader, loss_history, accuracy_history):
     model.eval()
 
-    total_samples = len(data_loader.dataset)
+    total_samples = 0
     correct_samples = 0
     total_loss = 0
 
     with torch.no_grad():
         for data, target in data_loader:
-            data = data.to(DEVICE_NAME)
-            target = target.to(DEVICE_NAME)
-            output = F.log_softmax(model(data), dim=1)
-            loss = F.nll_loss(output, target, reduction='sum')
-            _, pred = torch.max(output, dim=1)
+            try:
+                data = data.to(DEVICE_NAME)
+                target = target.to(DEVICE_NAME)
+                output = F.log_softmax(model(data), dim=1)
+                loss = F.nll_loss(output, target, reduction='sum')
+                _, pred = torch.max(output, dim=1)
 
-            total_loss += loss.item()
-            correct_samples += pred.eq(target).sum()
-
+                total_samples += 1
+                total_loss += loss.item()
+                correct_samples += pred.eq(target).sum()
+            except RuntimeError:
+                pass
+    
+    total_samples *= BATCH_SIZE_TEST
     avg_loss = total_loss / total_samples
+    avg_accuracy = correct_samples / total_samples
     loss_history.append(avg_loss)
+    accuracy_history.append(avg_accuracy)
     print('\nAverage test loss: ' + '{:.4f}'.format(avg_loss) +
           '  Accuracy:' + '{:5}'.format(correct_samples) + '/' +
           '{:5}'.format(total_samples) + ' (' +
-          '{:4.2f}'.format(100.0 * correct_samples / total_samples) + '%)\n')
+          '{:4.2f}'.format(100.0 * avg_accuracy) + '%)\n')
 
 
 if __name__ == "__main__":
-    model = ViTResNet(BasicBlock, [2, 4, 3, 3])
+    model = ViTResNet(BasicBlock, [2, 4, 3, 3], BATCH_SIZE_TRAIN=32)
     model = model.to(DEVICE_NAME)
     
     #optimizer = torch.optim.Adam(model.parameters(), lr=LR)
@@ -91,26 +98,22 @@ if __name__ == "__main__":
     optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=.9,weight_decay=4e-5, nesterov=True)
     #lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[35,48],gamma = 0.1)
 
-    train_loss_history, test_loss_history = [], []
+    train_loss_history, test_loss_history, accuracy_history = [], [], []
 
     for epoch in range(1, N_EPOCHS + 1):
         print('Epoch:', epoch)
         start_time = time.time()
         train(model, optimizer, train_loader, train_loss_history)
         print('Execution time:', '{:5.2f}'.format(time.time() - start_time), 'seconds')
-        evaluate(model, test_loader, test_loss_history)
+        evaluate(model, test_loader, test_loss_history, accuracy_history)
 
         if epoch % 5 == 0:
             for param_group in optimizer.param_groups:
                 param_group['lr'] *= 0.1
 
-            torch.save(model.state_dict(), MODEL_PATH)
-
-            print('New LR rate:' + param_group[1]['lr'])    
-
-        print('Train Loss History:' + train_loss_history)
+            torch.save(model.state_dict(), MODEL_PATH)   
 
     print('Execution time')
     
     torch.save(model.state_dict(), MODEL_PATH)
-    json.dump({"train_loss_history": train_loss_history, "test_loss_history": test_loss_history}, open("loss_history.json", 'w'))
+    json.dump({"train_loss_history": train_loss_history, "test_loss_history": test_loss_history, "accuracy_history": accuracy_history}, open("history.json", 'w'))
