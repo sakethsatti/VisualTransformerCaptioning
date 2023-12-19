@@ -7,8 +7,8 @@ from visual_transformer_code.vt import ViTResNet
 from visual_transformer_code.basicblock import BasicBlock
 import json
 
-BATCH_SIZE_TRAIN = 32
-BATCH_SIZE_TEST = 32
+BATCH_SIZE_TRAIN = 10
+BATCH_SIZE_TEST = 10
 TRAIN_RATIO = 0.8
 DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
@@ -43,7 +43,7 @@ def train(model, optimizer, data_loader, loss_history):
             target = target.to(DEVICE_NAME)
             optimizer.zero_grad()
             output = F.log_softmax(model(data), dim=1)
-            loss = F.nll_loss(output, target)
+            loss = torch.nn.CrossEntropyLoss(output, target)
             loss.backward()
             optimizer.step()
 
@@ -90,7 +90,7 @@ def evaluate(model, data_loader, loss_history, accuracy_history):
 
 
 if __name__ == "__main__":
-    model = ViTResNet(BasicBlock, [2, 4, 3, 3], BATCH_SIZE_TRAIN=32)
+    model = ViTResNet(BATCH_SIZE_TRAIN=32)
     model = model.to(DEVICE_NAME)
     
     #optimizer = torch.optim.Adam(model.parameters(), lr=LR)
