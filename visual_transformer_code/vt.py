@@ -2,31 +2,21 @@ import torch
 import torch.nn.functional as F
 from einops import rearrange
 from torch import nn
-import torch.nn.init as init
+from torchvision import models
 from visual_transformer_code.transformer import Transformer
 
-def _weights_init(m):
-    classname = m.__class__.__name__
-    # print(classname)
-    if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
-        init.kaiming_normal_(m.weight)
 
 class ViTResNet(nn.Module):
-    def __init__(self, block, num_blocks, BATCH_SIZE_TRAIN, num_classes=397, dim = 128, num_tokens = 16, mlp_dim = 256, heads = 8, depth = 6, emb_dropout = 0.1, dropout= 0.1):
+    def __init__(self, BATCH_SIZE_TRAIN, num_classes=397, dim = 128, num_tokens = 16, mlp_dim = 256, heads = 8, depth = 6, emb_dropout = 0.1, dropout= 0.1):
         super(ViTResNet, self).__init__()
         self.in_planes = 16
         self.L = num_tokens
         self.cT = dim
-
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(16)
-        self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2) #8x8 feature maps (64 in total)
-        self.layer4 = self._make_layer(block, 64, num_blocks[3], stride=2)
-        self.layer5 = self._make_layer(block, 64, num_blocks[3], stride=2)
-        self.apply(_weights_init)
-
+        model_with_fc = models.resnet152(weights='ResNet152_Weights.IMAGENET1K_V1')
+        self.resnet152 = torch.nn.Sequential(*(list(model_with_fc.children())[:-1]))
+        
+        for param in self.resnet152.parameters():
+            param.requires_grad = False
 
         # Tokenization
         self.token_wA = nn.Parameter(torch.empty(BATCH_SIZE_TRAIN,self.L, 64),requires_grad = True) #Tokenization parameters
@@ -61,15 +51,10 @@ class ViTResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-
-
     def forward(self, img, mask = None):
         x = F.relu(self.bn1(self.conv1(img)))
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
-        x = self.layer5(x)
+        x = self.resnet152(x)
+        
 
         x = rearrange(x, 'b c h w -> b (h w) c') # 64 vectors each with 64 points. These are the sequences or word vecotrs like in NLP
 
