@@ -7,12 +7,12 @@ from visual_transformer_code.vt import ViTResNet
 from visual_transformer_code.basicblock import BasicBlock
 import json
 
-BATCH_SIZE_TRAIN = 10
-BATCH_SIZE_TEST = 10
+BATCH_SIZE_TRAIN = 25
+BATCH_SIZE_TEST = 25
 TRAIN_RATIO = 0.8
 DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
-N_EPOCHS = 150
+N_EPOCHS = 25
 MODEL_PATH = "ViTRes.pt"
 LR = 0.01
 

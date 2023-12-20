@@ -52,8 +52,7 @@ class ViTResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, img, mask = None):
-        x = F.relu(self.bn1(self.conv1(img)))
-        x = self.resnet152(x)
+        x = self.resnet152(img)
         
 
         x = rearrange(x, 'b c h w -> b (h w) c') # 64 vectors each with 64 points. These are the sequences or word vecotrs like in NLP
