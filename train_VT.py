@@ -3,14 +3,14 @@ import torchvision
 from torch.utils.data import random_split
 import torch.nn.functional as F
 import time
-from visual_transformer_code.vt import ViTResNet
-from visual_transformer_code.basicblock import BasicBlock
+from vt_captioning.vt_resnet import vt_resnet50
+from vt_captioning.resnet import BasicBlock
 import json
 
-BATCH_SIZE_TRAIN = 25
-BATCH_SIZE_TEST = 25
+BATCH_SIZE_TRAIN = 15
+BATCH_SIZE_TEST = 15
 TRAIN_RATIO = 0.8
-DEVICE_NAME = 'cuda' if torch.cuda.is_available() else 'cpu'
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
 N_EPOCHS = 25
 MODEL_PATH = "ViTRes.pt"
@@ -34,69 +34,79 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE_TE
                                          shuffle=False)
 
 def train(model, optimizer, data_loader, loss_history):
+   
     total_samples = len(data_loader.dataset)
+    
     model.train()
+    model.to(DEVICE)
 
     for i, (data, target) in enumerate(data_loader):
-        try:
-            data = data.to(DEVICE_NAME)
-            target = target.to(DEVICE_NAME)
-            optimizer.zero_grad()
-            output = F.log_softmax(model(data), dim=1)
-            loss = torch.nn.CrossEntropyLoss(output, target)
-            loss.backward()
-            optimizer.step()
+        data = data.to(DEVICE)
+        target = target.to(DEVICE)
 
-            if i % 100 == 0:
-                print('[' +  '{:5}'.format(i * len(data)) + '/' + '{:5}'.format(total_samples) +
-                  ' (' + '{:3.0f}'.format(100 * i / len(data_loader)) + '%)]  Loss: ' +
+        optimizer.zero_grad()
+        output = F.log_softmax(model(data), dim=1)
+        loss = F.nll_loss(output, target)
+        loss.backward()
+        optimizer.step()
+        
+        loss_history.append(loss.item())
+        if i % 100 == 0:
+            print('[' +  '{:5}'.format(i * len(data)) + 
+                  '/' + '{:5}'.format(total_samples) +
+                  ' (' +
+                  '{:3.0f}'.format(100 * i / len(data_loader)) + '%)]  Loss: ' +
                   '{:6.4f}'.format(loss.item()))
-                
-            loss_history.append(loss.item())
-        except RuntimeError:
-            pass
 
-def evaluate(model, data_loader, loss_history, accuracy_history):
+def evaluate(model, data_loader, mode, loss_history):
+    
     model.eval()
-
-    total_samples = 0
+    
+    total_samples = len(data_loader.dataset)
     correct_samples = 0
     total_loss = 0
 
     with torch.no_grad():
-        for data, target in data_loader:
-            try:
-                data = data.to(DEVICE_NAME)
-                target = target.to(DEVICE_NAME)
+        try:
+            for data, target in data_loader:
+                data = data.to(DEVICE)
+                target = target.to(DEVICE)
                 output = F.log_softmax(model(data), dim=1)
                 loss = F.nll_loss(output, target, reduction='sum')
                 _, pred = torch.max(output, dim=1)
-
-                total_samples += 1
+                
                 total_loss += loss.item()
                 correct_samples += pred.eq(target).sum()
-            except RuntimeError:
-                pass
-    
-    total_samples *= BATCH_SIZE_TEST
+        except RuntimeError:
+            pass
+
     avg_loss = total_loss / total_samples
-    avg_accuracy = correct_samples / total_samples
     loss_history.append(avg_loss)
-    accuracy_history.append(avg_accuracy)
-    print('\nAverage test loss: ' + '{:.4f}'.format(avg_loss) +
+    print('\nAverage '+ mode + ' loss: ' + '{:.4f}'.format(avg_loss) +
           '  Accuracy:' + '{:5}'.format(correct_samples) + '/' +
           '{:5}'.format(total_samples) + ' (' +
-          '{:4.2f}'.format(100.0 * avg_accuracy) + '%)\n')
+          '{:4.2f}'.format(100.0 * correct_samples / total_samples) + '%)\n')
+    accuracy = 100.0 * correct_samples / total_samples
+    return accuracy
 
 
 if __name__ == "__main__":
-    model = ViTResNet(BATCH_SIZE_TRAIN=32)
-    model = model.to(DEVICE_NAME)
-    
-    #optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    model = vt_resnet50(
+            pretrained=True,
+            freeze='full_freeze',
+            tokens=16,
+            token_channels=128,
+            input_dim=1024,
+            vt_channels=2048,
+            transformer_enc_layers=2,
+            transformer_heads=8,
+            transformer_fc_dim=64,
+            image_channels=3,
+            num_classes=397,
+        )
+    model = model.to(DEVICE)
 
     optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=.9,weight_decay=4e-5, nesterov=True)
-    #lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[35,48],gamma = 0.1)
 
     train_loss_history, test_loss_history, accuracy_history = [], [], []
 
@@ -105,15 +115,13 @@ if __name__ == "__main__":
         start_time = time.time()
         train(model, optimizer, train_loader, train_loss_history)
         print('Execution time:', '{:5.2f}'.format(time.time() - start_time), 'seconds')
-        evaluate(model, test_loader, test_loss_history, accuracy_history)
+        accuracy = evaluate(model, test_loader, test_loss_history, accuracy_history)
+        accuracy_history.append(accuracy)
 
         if epoch % 5 == 0:
             for param_group in optimizer.param_groups:
                 param_group['lr'] *= 0.1
-
-            torch.save(model.state_dict(), MODEL_PATH)   
-
-    print('Execution time')
-    
-    torch.save(model.state_dict(), MODEL_PATH)
-    json.dump({"train_loss_history": train_loss_history, "test_loss_history": test_loss_history, "accuracy_history": accuracy_history}, open("history.json", 'w'))
+            print('New LR rate: ', optimizer.param_groups[0]['lr'])
+        
+        torch.save(model.state_dict(), MODEL_PATH)
+        json.dump({"train_loss_history": train_loss_history, "test_loss_history": test_loss_history, "accuracy_history": accuracy_history}, open("loss_history.json", 'w'))    
