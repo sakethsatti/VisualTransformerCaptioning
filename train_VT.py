@@ -29,9 +29,9 @@ test_size = len(dataset) - train_size
 train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE_TRAIN,
-                                          shuffle=True)
+                                          shuffle=True, drop_last=True)
 test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE_TEST,
-                                         shuffle=False)
+                                         shuffle=False, drop_last=True)
 
 def train(model, optimizer, data_loader, loss_history):
    
@@ -67,18 +67,15 @@ def evaluate(model, data_loader, mode, loss_history):
     total_loss = 0
 
     with torch.no_grad():
-        try:
-            for data, target in data_loader:
-                data = data.to(DEVICE)
-                target = target.to(DEVICE)
-                output = F.log_softmax(model(data), dim=1)
-                loss = F.nll_loss(output, target, reduction='sum')
-                _, pred = torch.max(output, dim=1)
-                
-                total_loss += loss.item()
-                correct_samples += pred.eq(target).sum()
-        except RuntimeError:
-            pass
+        for data, target in data_loader:
+            data = data.to(DEVICE)
+            target = target.to(DEVICE)
+            output = F.log_softmax(model(data), dim=1)
+            loss = F.nll_loss(output, target, reduction='sum')
+            _, pred = torch.max(output, dim=1)
+            
+            total_loss += loss.item()
+            correct_samples += pred.eq(target).sum()
 
     avg_loss = total_loss / total_samples
     loss_history.append(avg_loss)
@@ -100,7 +97,7 @@ if __name__ == "__main__":
             vt_channels=2048,
             transformer_enc_layers=2,
             transformer_heads=8,
-            transformer_fc_dim=64,
+            transformer_fc_dim=2048,
             image_channels=3,
             num_classes=397,
         )
