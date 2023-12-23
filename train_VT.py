@@ -12,7 +12,7 @@ BATCH_SIZE_TEST = 15
 TRAIN_RATIO = 0.8
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 DL_PATH = "../SUN397/" # add your own file path
-N_EPOCHS = 25
+N_EPOCHS = 50
 MODEL_PATH = "ViTRes.pt"
 LR = 0.01
 
@@ -58,20 +58,20 @@ def train(model, optimizer, data_loader, loss_history):
                   '{:3.0f}'.format(100 * i / len(data_loader)) + '%)]  Loss: ' +
                   '{:6.4f}'.format(loss.item()))
 
-def evaluate(model, data_loader, mode, loss_history):
-    
-    model.eval()
-    
+def evaluate(model, data_loader, loss_history):
+
     total_samples = len(data_loader.dataset)
     correct_samples = 0
     total_loss = 0
 
     with torch.no_grad():
+
         for data, target in data_loader:
             data = data.to(DEVICE)
             target = target.to(DEVICE)
             output = F.log_softmax(model(data), dim=1)
             loss = F.nll_loss(output, target, reduction='sum')
+            print(loss)
             _, pred = torch.max(output, dim=1)
             
             total_loss += loss.item()
@@ -79,7 +79,7 @@ def evaluate(model, data_loader, mode, loss_history):
 
     avg_loss = total_loss / total_samples
     loss_history.append(avg_loss)
-    print('\nAverage '+ mode + ' loss: ' + '{:.4f}'.format(avg_loss) +
+    print('Loss: ' + '{:.4f}'.format(avg_loss) +
           '  Accuracy:' + '{:5}'.format(correct_samples) + '/' +
           '{:5}'.format(total_samples) + ' (' +
           '{:4.2f}'.format(100.0 * correct_samples / total_samples) + '%)\n')
@@ -112,8 +112,8 @@ if __name__ == "__main__":
         start_time = time.time()
         train(model, optimizer, train_loader, train_loss_history)
         print('Execution time:', '{:5.2f}'.format(time.time() - start_time), 'seconds')
-        accuracy = evaluate(model, test_loader, test_loss_history, accuracy_history)
-        accuracy_history.append(accuracy)
+        accuracy = evaluate(model, test_loader, test_loss_history)
+        accuracy_history.append(accuracy.item())
 
         if epoch % 5 == 0:
             for param_group in optimizer.param_groups:
