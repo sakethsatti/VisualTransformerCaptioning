@@ -4,8 +4,8 @@ from torch.utils.data import random_split
 import torch.nn.functional as F
 import time
 from vt_captioning.vt_resnet import vt_resnet50
-from vt_captioning.resnet import BasicBlock
 import json
+import os
 
 BATCH_SIZE_TRAIN = 15
 BATCH_SIZE_TEST = 15
@@ -71,7 +71,6 @@ def evaluate(model, data_loader, loss_history):
             target = target.to(DEVICE)
             output = F.log_softmax(model(data), dim=1)
             loss = F.nll_loss(output, target, reduction='sum')
-            print(loss)
             _, pred = torch.max(output, dim=1)
             
             total_loss += loss.item()
@@ -103,11 +102,22 @@ if __name__ == "__main__":
         )
     model = model.to(DEVICE)
 
+    if os.path.exists("ViTRes.pt"):
+        model.load_state_dict(torch.load("ViTRes.pt"))
+        print("Model loaded from ViTRes.py")
+
     optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=.9,weight_decay=4e-5, nesterov=True)
 
     train_loss_history, test_loss_history, accuracy_history = [], [], []
+    if os.path.exists("loss_history.json"):
+        loss_history = json.load(open("loss_history.json"))
+        train_loss_history = loss_history["train_loss_history"]
+        test_loss_history = loss_history["test_loss_history"]
+        accuracy_history = loss_history["accuracy_history"]
+    else:
+        train_loss_history, test_loss_history, accuracy_history = [], [], []
 
-    for epoch in range(1, N_EPOCHS + 1):
+    for epoch in range(11, N_EPOCHS + 1):
         print('Epoch:', epoch)
         start_time = time.time()
         train(model, optimizer, train_loader, train_loss_history)
@@ -115,7 +125,7 @@ if __name__ == "__main__":
         accuracy = evaluate(model, test_loader, test_loss_history)
         accuracy_history.append(accuracy.item())
 
-        if epoch % 5 == 0:
+        if accuracy_history[-1] < (sum(accuracy_history[-7:1])/3):
             for param_group in optimizer.param_groups:
                 param_group['lr'] *= 0.1
             print('New LR rate: ', optimizer.param_groups[0]['lr'])
