@@ -1,7 +1,7 @@
 import torch
 from torch import nn
-from positional_encoding import positional_encoding_1d
-from decoder_layer import DecoderLayer
+from transformer_code.positional_encoding import positional_encoding_1d
+from transformer_code.decoder_layer import DecoderLayer
 
 class Decoder(nn.Module):
    def __init__(self, num_layers,d_model,num_heads,dff, target_vocab_size, maximum_position_encoding,   rate=0.1):

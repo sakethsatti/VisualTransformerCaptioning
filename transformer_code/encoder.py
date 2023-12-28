@@ -1,6 +1,6 @@
 from torch import nn
-from positional_encoding import positional_encoding_2d
-from encoder_layer import EncoderLayer
+from transformer_code.positional_encoding import positional_encoding_2d
+from transformer_code.encoder_layer import EncoderLayer
 
 class Encoder(nn.Module):
    def __init__(self, num_layers, d_model, num_heads, dff, row_size,col_size,rate=0.1):
@@ -8,7 +8,7 @@ class Encoder(nn.Module):
       self.d_model = d_model
       self.num_layers = num_layers
 
-      self.embedding = nn.Linear(self.d_model,activation='relu')
+      self.embedding = nn.ReLU(nn.Linear(out_features = self.d_model))
       self.pos_encoding = positional_encoding_2d(row_size,col_size,self.d_model)
 
       self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]

@@ -45,6 +45,7 @@ class VTResNet(nn.Module):
         self.tokens = tokens
         self.vt_channels = vt_channels
         self.vt_layers_num = vt_layers_num
+        print(self.vt_layers_num)
         # feature map resolution
         self.vt_layer_res = input_dim // 16
         
@@ -114,6 +115,11 @@ class VTResNet(nn.Module):
 
         return nn.Sequential(*layers)
     
+    def partial_unfreeze(self):
+        for n, p in self.resnet.named_parameters():
+            if ("conv1" not in n) or ("bn1" not in n) or ("layer1" not in n):
+                p.requires_grad = True
+    
     def forward(self, x: Tensor) -> Tensor:
         x = self.resnet(x)
         x = self.bn(x)
@@ -134,7 +140,7 @@ class VTResNet(nn.Module):
           
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
-        x = self.fc(x)
+        # x = self.fc(x) EXLCUDE FINAL FC LAYER
         
         return x
 

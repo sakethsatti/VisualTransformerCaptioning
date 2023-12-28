@@ -1,4 +1,4 @@
-from mha import MultiHeadAttention, PointWiseFeedForwardNetwork
+from transformer_code.mha import MultiHeadAttention, PointWiseFeedForwardNetwork
 import torch.nn as nn
 
 class DecoderLayer(nn.Module):
