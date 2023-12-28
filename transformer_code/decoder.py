@@ -16,7 +16,7 @@ class Decoder(nn.Module):
                          for _ in range(num_layers)]
       self.dropout = nn.Dropout(rate)
 
-   def call(self, x, enc_output, training,look_ahead_mask=None, padding_mask=None):
+   def forward(self, x, enc_output, training,look_ahead_mask=None, padding_mask=None):
       seq_len = x.size()[1]
       attention_weights = {}
 

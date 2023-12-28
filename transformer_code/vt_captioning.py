@@ -7,13 +7,14 @@ class VTCaptionModel(nn.Module):
               target_vocab_size,max_pos_encoding, rate=0.1):
       super(VTCaptionModel, self).__init__()
       self.VT = vt_model
-      self.encoder = Encoder(num_layers, d_model, num_heads, dff,row_size,col_size, rate)
+
+      self.encoder = Encoder(num_layers, self.VT.vt_channels, d_model, num_heads, dff,row_size,col_size, rate)
       self.decoder = Decoder(num_layers, d_model, num_heads, dff,
                           target_vocab_size,max_pos_encoding, rate)
-      self.final_layer = nn.Linear(target_vocab_size)
+      self.final_layer = nn.Linear(d_model, target_vocab_size)
 
-   def call(self, img, tar, training,look_ahead_mask=None,dec_padding_mask=None,enc_padding_mask=None   ):
-      enc_inp = self.vt_model(img)
+   def forward(self, img, tar, training,look_ahead_mask=None,dec_padding_mask=None,enc_padding_mask=None   ):
+      enc_inp = self.VT(img)
       enc_output = self.encoder(enc_inp, training, enc_padding_mask)  # (batch_size, inp_seq_len, d_model      )
       dec_output, attention_weights = self.decoder(
       tar, enc_output, training, look_ahead_mask, dec_padding_mask)

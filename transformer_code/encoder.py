@@ -1,22 +1,29 @@
+import torch
 from torch import nn
 from transformer_code.positional_encoding import positional_encoding_2d
 from transformer_code.encoder_layer import EncoderLayer
 
 class Encoder(nn.Module):
-   def __init__(self, num_layers, d_model, num_heads, dff, row_size,col_size,rate=0.1):
+   def __init__(self, num_layers, embed_size, d_model, num_heads, dff, row_size,col_size,rate=0.1):
       super(Encoder, self).__init__()
       self.d_model = d_model
       self.num_layers = num_layers
 
-      self.embedding = nn.ReLU(nn.Linear(out_features = self.d_model))
+      
+      self.embedding = nn.Linear(embed_size, self.d_model)
+      self.relu = nn.ReLU()
+
       self.pos_encoding = positional_encoding_2d(row_size,col_size,self.d_model)
 
       self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
       self.dropout = nn.Dropout(rate)
 
-   def call(self, x, training, mask=None):
-      seq_len = x.size()[1]
+   def forward(self, x, training, mask=None):
+      seq_len = x.size(1)
       x = self.embedding(x)  # (batch_size, input_seq_len(H*W), d_model)
+      x = self.relu(x)
+      x = torch.unsqueeze(x, 0)
+      print(x.size())
       x += self.pos_encoding[:, :seq_len, :]
 
       if training:

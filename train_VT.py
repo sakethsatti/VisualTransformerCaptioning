@@ -21,5 +21,7 @@ if __name__ == "__main__":
             image_channels=3,
         )
     
-    model = VTCaptionModel(feature_extractor, num_layer = 4, d_model = 512, num_heads = 8, dff = 2048, row_size = 8, col_size = 8, target_vocab_size = VOCAB_SIZE,
+    model = VTCaptionModel(feature_extractor, num_layers = 8, d_model = 512, num_heads = 16, dff = 2048, row_size = 1, col_size = 1, target_vocab_size = VOCAB_SIZE,
                 max_pos_encoding=VOCAB_SIZE, rate=0.2)
+    
+    model(torch.ones((1, 3, 300, 300)), 102, True)

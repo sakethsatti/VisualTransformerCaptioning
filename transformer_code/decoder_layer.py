@@ -9,15 +9,15 @@ class DecoderLayer(nn.Module):
 
         self.ffn = PointWiseFeedForwardNetwork(d_model, dff)
 
-        self.layernorm1 = nn.LayerNorm(eps=1e-6)
-        self.layernorm2 = nn.LayerNorm(eps=1e-6)
-        self.layernorm3 = nn.LayerNorm(eps=1e-6)
+        self.layernorm1 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
+        self.layernorm2 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
+        self.layernorm3 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
 
         self.dropout1 = nn.Dropout(p = rate)
         self.dropout2 = nn.Dropout(p = rate)
         self.dropout3 = nn.Dropout(p = rate)
 
-    def call(self, x, enc_output, training,look_ahead_mask=None, padding_mask=None):
+    def forward(self, x, enc_output, training,look_ahead_mask=None, padding_mask=None):
         if training:
             self.dropout1.train()
             self.dropout2.train()

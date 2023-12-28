@@ -1,6 +1,27 @@
 import torch
 import torch.nn as nn
 
+def create_padding_mask(seq):
+        seq = torch.eq(seq, 0).float()
+        return seq.unsqueeze(1).unsqueeze(2)  # (batch_size, 1, 1, seq_len)
+    
+def create_look_ahead_mask(size):
+    mask = 1 - torch.tril(torch.ones(size, size))
+    return mask  # (seq_len, seq_len)
+
+def scaled_dot_product_attention(q, k, v, mask):
+    matmul_qk = torch.matmul(q, k.transpose(-2, -1))  # (..., seq_len_q, seq_len_k)
+    dk = torch.tensor(k.size(-1), dtype=torch.float32)
+    scaled_attention_logits = matmul_qk / torch.sqrt(dk)
+
+    if mask is not None:
+        scaled_attention_logits += (mask * -1e9)
+
+    attention_weights = torch.nn.functional.softmax(scaled_attention_logits, dim=-1)
+    output = torch.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
+
+    return output, attention_weights
+
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
         super(MultiHeadAttention, self).__init__()
@@ -29,34 +50,14 @@ class MultiHeadAttention(nn.Module):
         k = self.split_heads(k, batch_size)  # (batch_size, num_heads, seq_len_k, depth)
         v = self.split_heads(v, batch_size)  # (batch_size, num_heads, seq_len_v, depth)
 
-        scaled_attention, attention_weights = self.scaled_dot_product_attention(q, k, v, mask)
+        scaled_attention, attention_weights = scaled_dot_product_attention(q, k, v, mask)
         scaled_attention = scaled_attention.permute(0, 2, 1, 3)  # (batch_size, seq_len_q, num_heads, depth)
 
         concat_attention = scaled_attention.contiguous().view(batch_size,-1, self.d_model)  # (batch_size, seq_len_q, d_model)
 
         output = self.dense(concat_attention)  # (batch_size, seq_len_q, d_model)
         return output, attention_weights
-    
-    def create_padding_mask(seq):
-        seq = torch.eq(seq, 0).float()
-        return seq.unsqueeze(1).unsqueeze(2)  # (batch_size, 1, 1, seq_len)
-    
-    def create_look_ahead_mask(size):
-        mask = 1 - torch.tril(torch.ones(size, size))
-        return mask  # (seq_len, seq_len)
 
-    def scaled_dot_product_attention(q, k, v, mask):
-        matmul_qk = torch.matmul(q, k.transpose(-2, -1))  # (..., seq_len_q, seq_len_k)
-        dk = torch.tensor(k.size(-1), dtype=torch.float32)
-        scaled_attention_logits = matmul_qk / torch.sqrt(dk)
-
-        if mask is not None:
-            scaled_attention_logits += (mask * -1e9)
-
-        attention_weights = torch.nn.functional.softmax(scaled_attention_logits, dim=-1)
-        output = torch.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
-
-        return output, attention_weights
     
 
 class PointWiseFeedForwardNetwork(nn.Module):
