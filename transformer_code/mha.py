@@ -13,8 +13,9 @@ def scaled_dot_product_attention(q, k, v, mask):
     matmul_qk = torch.matmul(q, k.transpose(-2, -1))  # (..., seq_len_q, seq_len_k)
     dk = torch.tensor(k.size(-1), dtype=torch.float32)
     scaled_attention_logits = matmul_qk / torch.sqrt(dk)
-
+    
     if mask is not None:
+        print("mask size: ", mask.size())
         scaled_attention_logits += (mask * -1e9)
 
     attention_weights = torch.nn.functional.softmax(scaled_attention_logits, dim=-1)
@@ -49,6 +50,7 @@ class MultiHeadAttention(nn.Module):
         q = self.split_heads(q, batch_size)  # (batch_size, num_heads, seq_len_q, depth)
         k = self.split_heads(k, batch_size)  # (batch_size, num_heads, seq_len_k, depth)
         v = self.split_heads(v, batch_size)  # (batch_size, num_heads, seq_len_v, depth)
+        
 
         scaled_attention, attention_weights = scaled_dot_product_attention(q, k, v, mask)
         scaled_attention = scaled_attention.permute(0, 2, 1, 3)  # (batch_size, seq_len_q, num_heads, depth)
