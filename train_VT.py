@@ -7,6 +7,10 @@ from transformers import AutoTokenizer
 from transformer_code.vt_captioning import VTCaptionModel
 from transformer_code.mha import create_look_ahead_mask, create_padding_mask
 from vizwiz import VizWiz
+import json
+import time
+
+torch.autograd.set_detect_anomaly(True)
 
 VOCAB_SIZE = 30522
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -29,8 +33,8 @@ train_dataloader = torch.utils.data.DataLoader(VizWiz_train, batch_size=64, shuf
 test_dataloader = torch.utils.data.DataLoader(VizWiz_test, batch_size=64, shuffle=True, drop_last=True)
 
 def create_masks_decoder(tar):
-    look_ahead_mask = create_look_ahead_mask(tar.size(1))
-    dec_target_padding_mask = create_padding_mask(tar)
+    look_ahead_mask = create_look_ahead_mask(tar.size(1)).to(device)
+    dec_target_padding_mask = create_padding_mask(tar).to(device)
 
     combined_mask = torch.max(dec_target_padding_mask.unsqueeze(1), look_ahead_mask)
     return combined_mask
@@ -40,14 +44,16 @@ def train_step(img_tensor, tar, transformer, optimizer, train_loss, train_accura
     tar_real = tar[:, 1:]
     dec_mask = create_masks_decoder(tar_inp)
 
+    
     optimizer.zero_grad()
-    predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
-    loss = F.cross_entropy(tar_real, predictions)
+    predictions, _ = transformer(img_tensor, tar_inp, dec_mask)
+
+    loss = F.cross_entropy(predictions, tar_real)
     loss.backward()
     optimizer.step()
 
     train_loss += loss.item()
-    train_accuracy += torch.sum(torch.argmax(predictions, dim=-1) == tar_real).item() / tar_real.size(1)
+    train_accuracy += torch.sum(torch.argmax(predictions.permute(0, 2, 1), dim=-1) == tar_real).item() / tar_real.size(1)
 
     return train_loss, train_accuracy
 
@@ -65,11 +71,11 @@ def evaluate(model, val_loader):
             tar_real = tar[:, 1:]
             dec_mask = create_masks_decoder(tar_inp)
 
-            predictions, _ = model(img_tensor, tar_inp, False, dec_mask)
+            predictions, _ = model(img_tensor, tar_inp, dec_mask)
             loss = F.cross_entropy(tar_real, predictions)
 
             val_loss += loss.item()
-            val_accuracy += torch.sum(torch.argmax(predictions, dim=-1) == tar_real).item() / tar_real.size(1)
+            val_accuracy += torch.sum(torch.argmax(predictions.permute(0, 2, 1), dim=-1) == tar_real).item() / tar_real.size(1)
 
     return val_loss / len(val_loader), 100.0 * val_accuracy / len(val_loader)
 
@@ -87,14 +93,20 @@ if __name__ == "__main__":
             image_channels=3,
         )
     
+    feature_extractor.to(device)
+
     model = VTCaptionModel(feature_extractor, num_layers = 8, d_model = 512, num_heads = 16, dff = 2048, row_size = 1, col_size = 1, target_vocab_size = VOCAB_SIZE,
                 max_pos_encoding=VOCAB_SIZE, rate=0.2)
+
+    model.to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=2e-5, betas=(0.9, 0.98), eps=1e-9)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.8)
 
+    full_history = {'train_loss': [], 'train_accuracy': [], 'val_loss': [], 'val_accuracy': []}
+
     for epoch in range(num_epochs):
-        print(epoch)
+        print("Epoch ", epoch + 1)
         model.train()
         train_loss = 0.0
         train_accuracy = 0.0
@@ -105,7 +117,9 @@ if __name__ == "__main__":
             tar = tar.to(device)
 
             train_loss, train_accuracy = train_step(img_tensor, tar, model, optimizer, train_loss, train_accuracy)
-            exit()
+            
+            if batch_idx % 50 == 0:
+                print(f"Batch [{batch_idx}/{len(train_dataloader)}] ")
 
         scheduler.step()  # Adjust learning rate
         test_loss, test_accuracy = evaluate(model, test_dataloader)
@@ -117,3 +131,13 @@ if __name__ == "__main__":
             f"Test Loss: {test_loss} "
             f"Test Accuracy: {test_accuracy}%"
             )
+        
+        full_history['train_loss'].append(train_loss / len(train_dataloader))
+        full_history['train_accuracy'].append(100.0 * train_accuracy / len(train_dataloader))
+        full_history['val_loss'].append(test_loss)
+        full_history['val_accuracy'].append(test_accuracy)
+
+        with open('full_history.json', 'w') as fp:
+            json.dump(full_history, fp)
+
+        torch.save(model.state_dict(), 'VTResCaptioner.pt')

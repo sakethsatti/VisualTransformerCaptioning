@@ -14,8 +14,9 @@ def scaled_dot_product_attention(q, k, v, mask):
     dk = torch.tensor(k.size(-1), dtype=torch.float32)
     scaled_attention_logits = matmul_qk / torch.sqrt(dk)
     
+
     if mask is not None:
-        print("mask size: ", mask.size())
+        mask = mask.squeeze(1)
         scaled_attention_logits += (mask * -1e9)
 
     attention_weights = torch.nn.functional.softmax(scaled_attention_logits, dim=-1)
@@ -31,10 +32,10 @@ class MultiHeadAttention(nn.Module):
         assert d_model % self.num_heads == 0
         self.depth = d_model // self.num_heads
         
-        self.wq = nn.Linear(d_model, d_model)
-        self.wk = nn.Linear(d_model, d_model)
-        self.wv = nn.Linear(d_model, d_model)
-        self.dense = nn.Linear(d_model, d_model)
+        self.wq = nn.Linear(d_model, d_model).to("cuda")
+        self.wk = nn.Linear(d_model, d_model).to("cuda")
+        self.wv = nn.Linear(d_model, d_model).to("cuda")
+        self.dense = nn.Linear(d_model, d_model).to("cuda")
     
     def split_heads(self, x, batch_size):
         x = x.view(batch_size, -1, self.num_heads, self.depth)
@@ -42,6 +43,9 @@ class MultiHeadAttention(nn.Module):
     
     def forward(self, v, k, q, mask=None):
         batch_size = q.size(0)
+        q = q.to("cuda")
+        k = k.to("cuda")
+        k = k.to("cuda")
 
         q = self.wq(q)  # (batch_size, seq_len, d_model)
         k = self.wk(k)  # (batch_size, seq_len, d_model)

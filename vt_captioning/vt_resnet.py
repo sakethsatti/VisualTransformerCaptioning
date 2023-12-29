@@ -45,7 +45,6 @@ class VTResNet(nn.Module):
         self.tokens = tokens
         self.vt_channels = vt_channels
         self.vt_layers_num = vt_layers_num
-        print(self.vt_layers_num)
         # feature map resolution
         self.vt_layer_res = input_dim // 16
         

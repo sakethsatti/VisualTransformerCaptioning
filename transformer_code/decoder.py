@@ -9,30 +9,25 @@ class Decoder(nn.Module):
       self.d_model = d_model
       self.num_layers = num_layers
 
-      self.embedding = nn.Embedding(target_vocab_size, d_model)
-      self.pos_encoding = positional_encoding_1d(maximum_position_encoding, d_model)
+      self.embedding = nn.Embedding(target_vocab_size, d_model).to("cuda")
+      self.pos_encoding = positional_encoding_1d(maximum_position_encoding, d_model).to("cuda")
 
       self.dec_layers = [DecoderLayer(d_model, num_heads, dff, rate)
                          for _ in range(num_layers)]
       self.dropout = nn.Dropout(rate)
 
-   def forward(self, x, enc_output, training,look_ahead_mask=None, padding_mask=None):
+   def forward(self, x, enc_output, look_ahead_mask=None, padding_mask=None):
       seq_len = x.size()[1]
       attention_weights = {}
 
       x = self.embedding(x)  # (batch_size, target_seq_len, d_model)
       x *= torch.sqrt(torch.tensor(self.d_model, dtype=torch.float32))
       x += self.pos_encoding[:, :seq_len, :]
-      
-      if training:
-         self.dropout.train()
-      else:
-         self.dropout.eval()
 
       x = self.dropout(x)
 
       for i in range(self.num_layers):
-         x, block1, block2 = self.dec_layers[i](x, enc_output, training,
+         x, block1, block2 = self.dec_layers[i](x, enc_output,
                                             look_ahead_mask, padding_mask)
          
          attention_weights['decoder_layer{}_block1'.format(i+1)] = block1

@@ -4,29 +4,21 @@ import torch.nn as nn
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, dff, rate=0.1):
         super(DecoderLayer, self).__init__()
-        self.mha1 = MultiHeadAttention(d_model, num_heads)
-        self.mha2 = MultiHeadAttention(d_model, num_heads)
+        self.mha1 = MultiHeadAttention(d_model, num_heads).to("cuda")
+        self.mha2 = MultiHeadAttention(d_model, num_heads).to("cuda")
 
-        self.ffn = PointWiseFeedForwardNetwork(d_model, dff)
+        self.ffn = PointWiseFeedForwardNetwork(d_model, dff).to("cuda")
 
-        self.layernorm1 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
-        self.layernorm2 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
-        self.layernorm3 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6)
+        self.layernorm1 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6).to("cuda")
+        self.layernorm2 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6).to("cuda")
+        self.layernorm3 = nn.LayerNorm(normalized_shape=d_model, eps=1e-6).to("cuda")
 
-        self.dropout1 = nn.Dropout(p = rate)
-        self.dropout2 = nn.Dropout(p = rate)
-        self.dropout3 = nn.Dropout(p = rate)
+        self.dropout1 = nn.Dropout(p = rate).to("cuda")
+        self.dropout2 = nn.Dropout(p = rate).to("cuda")
+        self.dropout3 = nn.Dropout(p = rate).to("cuda")
 
-    def forward(self, x, enc_output, training,look_ahead_mask=None, padding_mask=None):
-        if training:
-            self.dropout1.train()
-            self.dropout2.train()
-            self.dropout3.train()
-        else:
-            self.dropout1.eval()
-            self.dropout2.eval()
-            self.dropout3.eval()
-        
+    def forward(self, x, enc_output, look_ahead_mask=None, padding_mask=None):
+            
         attn1, attn_weights_block1 = self.mha1(x, x, x, look_ahead_mask)  # (batch_size, target_seq_len, d_model)
         attn1 = self.dropout1(attn1)
         out1 = self.layernorm1(attn1 + x)
