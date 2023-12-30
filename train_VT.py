@@ -58,7 +58,6 @@ def train_step(img_tensor, tar, transformer, optimizer, train_loss, train_accura
     return train_loss, train_accuracy
 
 def evaluate(model, val_loader):
-    model.eval()
     val_loss = 0.0
     val_accuracy = 0.0
 
@@ -72,7 +71,7 @@ def evaluate(model, val_loader):
             dec_mask = create_masks_decoder(tar_inp)
 
             predictions, _ = model(img_tensor, tar_inp, dec_mask)
-            loss = F.cross_entropy(tar_real, predictions)
+            loss = F.cross_entropy(predictions, tar_real)
 
             val_loss += loss.item()
             val_accuracy += torch.sum(torch.argmax(predictions.permute(0, 2, 1), dim=-1) == tar_real).item() / tar_real.size(1)
@@ -110,27 +109,30 @@ if __name__ == "__main__":
         model.train()
         train_loss = 0.0
         train_accuracy = 0.0
+        start_time = time.time()
 
         for batch_idx, (img_tensor, tar) in enumerate(train_dataloader):
             optimizer.zero_grad()
             img_tensor = img_tensor.to(device)
             tar = tar.to(device)
-
             train_loss, train_accuracy = train_step(img_tensor, tar, model, optimizer, train_loss, train_accuracy)
             
-            if batch_idx % 50 == 0:
+            if batch_idx % 50 == 0 or batch_idx == len(train_dataloader) - 1:
                 print(f"Batch [{batch_idx}/{len(train_dataloader)}] ")
 
         scheduler.step()  # Adjust learning rate
         test_loss, test_accuracy = evaluate(model, test_dataloader)
 
-
-        print(f"Epoch [{epoch + 1}/{num_epochs}] "
-            f"Train Loss: {train_loss / len(train_dataloader):.4f} "
-            f"Train Accuracy: {100.0 * train_accuracy / len(train_dataloader):.2f}% "
-            f"Test Loss: {test_loss} "
-            f"Test Accuracy: {test_accuracy}%"
+        print()
+        print(f"Train Loss: {train_loss / len(train_dataloader):.4f} \n"
+            f"Train Accuracy: {100.0 * train_accuracy / len(train_dataloader):.2f}% \n"
+            f"Test Loss: {test_loss:.4f} \n"
+            f"Test Accuracy: {test_accuracy:.2f}% \n"
+            f"Time taken: {time.time() - start_time:.2f} seconds"
             )
+        
+        print()
+        print()
         
         full_history['train_loss'].append(train_loss / len(train_dataloader))
         full_history['train_accuracy'].append(100.0 * train_accuracy / len(train_dataloader))
