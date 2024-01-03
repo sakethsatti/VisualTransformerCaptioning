@@ -46,7 +46,9 @@ def train_step(img_tensor, tar, transformer, optimizer, train_loss, train_accura
 
     
     optimizer.zero_grad()
+    print(img_tensor.shape, tar_inp.shape, dec_mask.shape)
     predictions, _ = transformer(img_tensor, tar_inp, dec_mask)
+
 
     loss = F.cross_entropy(predictions, tar_real)
     loss.backward()
