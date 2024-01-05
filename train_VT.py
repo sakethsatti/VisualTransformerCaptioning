@@ -55,7 +55,7 @@ def train_step(img_tensor, tar, transformer, optimizer, train_loss, train_accura
     optimizer.step()
 
     train_loss += loss.item()
-    train_accuracy += torch.sum(torch.argmax(predictions.permute(0, 2, 1), dim=-1) == tar_real).item() / tar_real.size(1)
+    train_accuracy += torch.sum(torch.argmax(predictions.permute(0, 2, 1), dim=-1) == tar_real).item() / (tar_real.size(1) * tar_real.size(0))
 
     return train_loss, train_accuracy
 
@@ -76,7 +76,7 @@ def evaluate(model, val_loader):
             loss = F.cross_entropy(predictions, tar_real)
 
             val_loss += loss.item()
-            val_accuracy += torch.sum(torch.argmax(predictions.permute(0, 2, 1), dim=-1) == tar_real).item() / tar_real.size(1)
+            val_accuracy += torch.sum(torch.argmax(predictions.permute(0, 2, 1), dim=-1) == tar_real).item() / (tar_real.size(1) * tar_real.size(0))
 
     return val_loss / len(val_loader), 100.0 * val_accuracy / len(val_loader)
 
@@ -121,6 +121,8 @@ if __name__ == "__main__":
             
             if batch_idx % 50 == 0 or batch_idx == len(train_dataloader) - 1:
                 print(f"Batch [{batch_idx}/{len(train_dataloader)}] ")
+        
+        
 
         scheduler.step()  # Adjust learning rate
         test_loss, test_accuracy = evaluate(model, test_dataloader)
