@@ -24,8 +24,12 @@ transform = torchvision.transforms.Compose([
 
 tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
 
-VizWiz_train = VizWiz(train_data.image_file.to_list(), train_data.captions.to_list(), transform, tokenizer)
-VizWiz_test = VizWiz(test_data.image_file.to_list(), test_data.captions.to_list(), transform, tokenizer)
+VizWiz_train = VizWiz(train_data.image_file.to_list(),
+                      train_data.captions.to_list(), 
+                      transform, tokenizer)
+VizWiz_test = VizWiz(test_data.image_file.to_list(),
+                     test_data.captions.to_list(),
+                     transform, tokenizer)
 
 train_dataloader = torch.utils.data.DataLoader(VizWiz_train, batch_size=64, shuffle=True, drop_last=True)
 test_dataloader = torch.utils.data.DataLoader(VizWiz_test, batch_size=64, shuffle=True, drop_last=True)
