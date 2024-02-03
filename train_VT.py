@@ -10,8 +10,6 @@ from vizwiz import VizWiz
 import json
 import time
 
-torch.autograd.set_detect_anomaly(True)
-
 VOCAB_SIZE = 30522
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 num_epochs = 60
