@@ -43,28 +43,28 @@ if __name__ == "__main__":
 
     print("Train Captions")
     print()
-    for idx in range(0, len(train_data), 5):
+    for idx in range(0, len(train_data)):
         # caption = remove_number()
-        caption = train_data["captions"][idx]
+        caption = train_data["captions"][idx].lower()
         caption = remove_contractions(caption)
         caption = remove_punctuation(caption)
         
         train_data["captions"][idx] = caption
 
-        if idx % 1000 == 0:
+        if idx % 10000 == 0:
             print("Train image ", idx, " completed")
     
     print()
     print("Test Captions")
     print()
     for idx in range(len(test_data)):
-        caption = test_data["captions"][idx]
+        caption = test_data["captions"][idx].lower()
         caption = remove_contractions(caption)
         caption = remove_punctuation(caption)
 
         test_data["captions"][idx] = caption
 
-        if idx % 1000 == 0:
+        if idx % 10000 == 0:
             print("Test image ", idx, " completed")
     
 
