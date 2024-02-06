@@ -5,6 +5,7 @@ import contractions
 import string
 import inflect
 
+pd.options.mode.chained_assignment = None  # default='warn'
 
 def remove_punctuation(org_str):
   org_str = org_str.replace("-", " ")
@@ -43,9 +44,18 @@ if __name__ == "__main__":
 
     print("Train Captions")
     print()
+    
+    del_train_idx = []
+    del_test_idx = []
+
     for idx in range(0, len(train_data)):
-        # caption = remove_number()
+    
         caption = train_data["captions"][idx].lower()
+        
+        if "quality issues" in caption:
+            del_train_idx.append(idx)
+            continue
+
         caption = remove_contractions(caption)
         caption = remove_punctuation(caption)
         
@@ -54,27 +64,41 @@ if __name__ == "__main__":
         if idx % 10000 == 0:
             print("Train image ", idx, " completed")
     
+   
+    train_data.drop(del_train_idx, axis = 0, inplace=True)
+    train_data.reset_index(inplace = True)
+
     print()
     print("Test Captions")
     print()
+
     for idx in range(len(test_data)):
         caption = test_data["captions"][idx].lower()
+        
+        if "quality issues" in caption:
+            del_test_idx.append(idx)
+            continue
+        
         caption = remove_contractions(caption)
         caption = remove_punctuation(caption)
 
         test_data["captions"][idx] = caption
+            
 
         if idx % 10000 == 0:
             print("Test image ", idx, " completed")
     
+    test_data.drop(del_test_idx, axis = 0, inplace=True)
+    test_data.reset_index(inplace = True)
+         
 
     for idx in range(len(train_data.image_file)):
-        train_data.image_file[idx] = "../train/" + train_data.image_file[idx]
+        train_data["image_file"][idx] = "../train/" + train_data.image_file[idx]
         # assuming path is directly outside current directory; change if need 
 
     for idx in range(len(test_data.image_file)):
-        test_data.image_file[idx] = "../val/" + test_data.image_file[idx]
+        test_data["image_file"][idx] = "../val/" + test_data.image_file[idx]
         # assuming path is directly outside current directory; change if need
 
-    train_data.to_csv('train.csv', index=False)
-    test_data.to_csv('test.csv', index=False)
+    train_data.to_csv('train.csv', index = False)
+    test_data.to_csv('test.csv', index = False)
