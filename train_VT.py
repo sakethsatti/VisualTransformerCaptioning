@@ -9,6 +9,7 @@ from transformer_code.mha import create_look_ahead_mask, create_padding_mask
 from vizwiz import VizWiz
 import json
 import time
+import os
 
 VOCAB_SIZE = 30522
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -48,7 +49,6 @@ def train_step(img_tensor, tar, transformer, optimizer, train_loss, train_accura
 
     
     optimizer.zero_grad()
-    print(img_tensor.shape, tar_inp.shape, dec_mask.shape)
     predictions, _ = transformer(img_tensor, tar_inp, dec_mask)
 
 
@@ -105,10 +105,19 @@ if __name__ == "__main__":
 
     optimizer = torch.optim.Adam(model.parameters(), lr=2e-5, betas=(0.9, 0.98), eps=1e-9)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.8)
+    
+    start_epoch = 0
 
-    full_history = {'train_loss': [], 'train_accuracy': [], 'val_loss': [], 'val_accuracy': []}
+    if (os.path.exists("VTResCaptioner.pt")):
+        model.load_state_dict(torch.load('VTResCaptioner.pt'))
+        with open("full_history.json", "r") as f:
+            full_history = json.load(f)
+        start_epoch = len(full_history['train_loss'])
 
-    for epoch in range(num_epochs):
+    else:
+        full_history = {'train_loss': [], 'train_accuracy': [], 'val_loss': [], 'val_accuracy': []}
+
+    for epoch in range(start_epoch, num_epochs):
         print("Epoch ", epoch + 1)
         model.train()
         train_loss = 0.0

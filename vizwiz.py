@@ -4,7 +4,7 @@ from PIL import Image
 class VizWiz(torch.utils.data.Dataset):
   def __init__(self, img_paths, captions, transforms, tokenizer):
       self.img_paths = img_paths
-      self.captions = tokenizer(captions, padding = True, return_tensors = 'pt')['input_ids']
+      self.captions = tokenizer(captions, padding = True, max_length = 25, truncation = True, return_tensors = 'pt')['input_ids']
       self.transforms = transforms
 
   def __len__(self):
