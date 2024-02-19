@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append('../')
+
 import torch
 import torchvision
 import pandas as pd
@@ -10,6 +14,7 @@ from vizwiz import VizWiz
 import json
 import time
 import os
+
 
 VOCAB_SIZE = 30522
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -32,8 +37,8 @@ VizWiz_test = VizWiz(test_data.image_file.to_list(),
                      test_data.captions.to_list(),
                      transform, tokenizer)
 
-train_dataloader = torch.utils.data.DataLoader(VizWiz_train, batch_size=64, shuffle=True, drop_last=True)
-test_dataloader = torch.utils.data.DataLoader(VizWiz_test, batch_size=64, shuffle=True, drop_last=True)
+train_dataloader = torch.utils.data.DataLoader(VizWiz_train, batch_size=16, shuffle=True, drop_last=True)
+test_dataloader = torch.utils.data.DataLoader(VizWiz_test, batch_size=16, shuffle=True, drop_last=True)
 
 def create_masks_decoder(tar):
     look_ahead_mask = create_look_ahead_mask(tar.size(1)).to(device)
@@ -98,7 +103,7 @@ if __name__ == "__main__":
     
     feature_extractor.to(device)
 
-    model = VTCaptionModel(feature_extractor, num_layers = 8, d_model = 512, num_heads = 16, dff = 2048, row_size = 1, col_size = 1, target_vocab_size = VOCAB_SIZE, max_pos_encoding=VOCAB_SIZE, rate=0.2)
+    model = VTCaptionModel(feature_extractor, num_layers = 8, d_model = 1024, num_heads = 16, dff = 2048, row_size = 1, col_size = 1, target_vocab_size = VOCAB_SIZE, max_pos_encoding=VOCAB_SIZE, rate=0.2)
 
     model.to(device)
 
