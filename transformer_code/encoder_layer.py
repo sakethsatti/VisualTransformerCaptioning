@@ -1,5 +1,7 @@
 from transformer_code.mha import MultiHeadAttention, PointWiseFeedForwardNetwork
+import torch
 import torch.nn as nn
+
 
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, dff, rate=0.1):
@@ -14,6 +16,7 @@ class EncoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(p = rate).to("cuda")
 
     def forward(self, x, mask=None):
+        x = torch.squeeze(x, 0)
         attn_output, _ = self.mha(x, x, x, mask)  # (batch_size, input_seq_len, d_model)
         attn_output = self.dropout1(attn_output)
         out1 = self.layernorm1(x + attn_output)  # (batch_size, input_seq_len, d_model)

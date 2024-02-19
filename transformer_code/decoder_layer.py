@@ -18,7 +18,7 @@ class DecoderLayer(nn.Module):
         self.dropout3 = nn.Dropout(p = rate).to("cuda")
 
     def forward(self, x, enc_output, look_ahead_mask=None, padding_mask=None):
-            
+        
         attn1, attn_weights_block1 = self.mha1(x, x, x, look_ahead_mask)  # (batch_size, target_seq_len, d_model)
         attn1 = self.dropout1(attn1)
         out1 = self.layernorm1(attn1 + x)

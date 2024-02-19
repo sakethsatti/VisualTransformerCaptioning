@@ -13,7 +13,7 @@ import os
 
 VOCAB_SIZE = 30522
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-num_epochs = 60
+num_epochs = 30
 
 train_data = pd.read_csv('train.csv')
 test_data = pd.read_csv('test.csv')
@@ -39,7 +39,7 @@ def create_masks_decoder(tar):
     look_ahead_mask = create_look_ahead_mask(tar.size(1)).to(device)
     dec_target_padding_mask = create_padding_mask(tar).to(device)
 
-    combined_mask = torch.max(dec_target_padding_mask.unsqueeze(1), look_ahead_mask)
+    combined_mask = torch.max(dec_target_padding_mask, look_ahead_mask)
     return combined_mask
 
 def train_step(img_tensor, tar, transformer, optimizer, train_loss, train_accuracy):
@@ -98,8 +98,7 @@ if __name__ == "__main__":
     
     feature_extractor.to(device)
 
-    model = VTCaptionModel(feature_extractor, num_layers = 8, d_model = 512, num_heads = 16, dff = 2048, row_size = 1, col_size = 1, target_vocab_size = VOCAB_SIZE,
-                max_pos_encoding=VOCAB_SIZE, rate=0.2)
+    model = VTCaptionModel(feature_extractor, num_layers = 8, d_model = 512, num_heads = 16, dff = 2048, row_size = 1, col_size = 1, target_vocab_size = VOCAB_SIZE, max_pos_encoding=VOCAB_SIZE, rate=0.2)
 
     model.to(device)
 
@@ -125,6 +124,8 @@ if __name__ == "__main__":
         start_time = time.time()
 
         for batch_idx, (img_tensor, tar) in enumerate(train_dataloader):
+            print(img_tensor.dtype)
+            print(tar.dtype)
             optimizer.zero_grad()
             img_tensor = img_tensor.to(device)
             tar = tar.to(device)

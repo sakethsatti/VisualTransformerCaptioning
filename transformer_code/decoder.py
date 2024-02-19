@@ -19,11 +19,10 @@ class Decoder(nn.Module):
    def forward(self, x, enc_output, look_ahead_mask=None, padding_mask=None):
       seq_len = x.size()[1]
       attention_weights = {}
-
+      
       x = self.embedding(x)  # (batch_size, target_seq_len, d_model)
       x *= torch.sqrt(torch.tensor(self.d_model, dtype=torch.float32))
       x += self.pos_encoding[:, :seq_len, :]
-
       x = self.dropout(x)
 
       for i in range(self.num_layers):

@@ -121,6 +121,8 @@ class VTResNet(nn.Module):
     
     def forward(self, x: Tensor) -> Tensor:
         x = self.resnet(x)
+        
+
         x = self.bn(x)
 
         N, C, H, W = x.shape
@@ -134,11 +136,12 @@ class VTResNet(nn.Module):
         for i in range(1, self.vt_layers_num):
             x, t = self.vt_layers[i](x, t)
     
-        x = x.permute(0, 2, 1)
-        x = x.reshape(N, self.vt_channels, H, W)
+        # print(x.size())
+        # x = x.permute(0, 2, 1)
+        # x = x.reshape(N, self.vt_channels, H, W)
           
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
+        # x = self.avgpool(x)
+        # x = torch.flatten(x, 1)
         # x = self.fc(x) EXLCUDE FINAL FC LAYER
         
         return x

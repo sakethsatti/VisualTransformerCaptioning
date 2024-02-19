@@ -23,10 +23,8 @@ class Encoder(nn.Module):
       seq_len = x.size(1)
       x = self.embedding(x)  # (batch_size, input_seq_len(H*W), d_model)
       x = self.linear_activation(x)
-      x = torch.unsqueeze(x, 0)
       self.pos_encoding = self.pos_encoding.to(x.device)
       x += self.pos_encoding[:, :seq_len, :]
-         
       x = self.dropout(x)
       
       for i in range(self.num_layers):
