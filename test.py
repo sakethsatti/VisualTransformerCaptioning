@@ -35,3 +35,5 @@ print("trainable parameters:", sum(p.numel() for p in model.parameters() if p.re
 
 
 predictions, _ = model(torch.ones(16, 3, 300, 300, dtype = torch.float32).to(device), torch.ones(16, 25, dtype=torch.int32).to(device), create_masks_decoder(torch.ones(1,25,dtype=torch.int32)).to(device))
+
+print(predictions.size())

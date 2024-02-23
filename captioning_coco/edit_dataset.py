@@ -25,9 +25,9 @@ if __name__ == "__main__":
     del_test_idx = []
 
     for idx in range(0, len(train_data)):
-    
+        train_data["path"][idx] = "../../train2014/" + train_data.path[idx]
         caption = train_data["captions"][idx].lower()
-
+        
         caption = remove_contractions(caption)
         caption = remove_punctuation(caption)
         
@@ -45,6 +45,8 @@ if __name__ == "__main__":
     print()
 
     for idx in range(len(test_data)):
+        test_data["path"][idx] = "../../val2014/" + test_data.path[idx]
+
         caption = test_data["captions"][idx].lower()
         
         caption = remove_contractions(caption)
@@ -57,16 +59,8 @@ if __name__ == "__main__":
             print("Test image ", idx, " completed")
     
     test_data.drop(del_test_idx, axis = 0, inplace=True)
-    test_data.reset_index(inplace = True)
-         
+    test_data.reset_index(inplace = True)  
 
-    for idx in range(len(train_data.path)):
-        train_data["path"][idx] = "../../train2014/" + train_data.image_file[idx]
-        # assuming path is directly outside current directory; change if need 
-
-    for idx in range(len(test_data.path)):
-        test_data["path"][idx] = "../../val2014/" + test_data.image_file[idx]
-        # assuming path is directly outside current directory; change if need
-
+        
     train_data.to_csv('edited_cocotrain.csv', index = False)
     test_data.to_csv('edited_cocoval.csv', index = False)
