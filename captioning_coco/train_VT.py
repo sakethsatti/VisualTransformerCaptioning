@@ -18,11 +18,11 @@ import os
 
 VOCAB_SIZE = 30522
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print("Using ", device)
 num_epochs = 30
 
 train_data = pd.read_csv('cocotrain.csv')
-test_data = pd.read_csv('cocoval.csv')
-test_data = test_data.head(50000) # reduce testing time; change if need be
+test_data = pd.read_csv('cocoval.csv').head(50000) # reduce testing time; change if need be
 
 transform = torchvision.transforms.Compose([
      torchvision.transforms.Resize((300, 300)),

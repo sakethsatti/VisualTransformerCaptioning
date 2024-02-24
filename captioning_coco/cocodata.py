@@ -12,7 +12,7 @@ class COCO(torch.utils.data.Dataset):
 
   def __getitem__(self, index):
       image = self.img_paths[index]
-      image = Image.open(image)
+      image = Image.open(image).convert('RGB')
       image = self.transforms(image)
 
       targets = self.captions[index]
