@@ -10,7 +10,7 @@ from vt_captioning.vt_resnet import vt_resnet50
 from transformers import AutoTokenizer
 from transformer_code.vt_captioning import VTCaptionModel
 from transformer_code.mha import create_look_ahead_mask, create_padding_mask
-from vizwiz import VizWiz
+from cocodata import COCO
 import json
 import time
 import os
@@ -20,8 +20,9 @@ VOCAB_SIZE = 30522
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 num_epochs = 30
 
-train_data = pd.read_csv('train.csv')
-test_data = pd.read_csv('test.csv')
+train_data = pd.read_csv('cocotrain.csv')
+test_data = pd.read_csv('cocoval.csv')
+test_data = test_data.head(50000) # reduce testing time; change if need be
 
 transform = torchvision.transforms.Compose([
      torchvision.transforms.Resize((300, 300)),
@@ -30,15 +31,15 @@ transform = torchvision.transforms.Compose([
 
 tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
 
-VizWiz_train = VizWiz(train_data.image_file.to_list(),
+COCO_train = COCO(train_data.path.to_list(),
                       train_data.captions.to_list(), 
                       transform, tokenizer)
-VizWiz_test = VizWiz(test_data.image_file.to_list(),
+COCO_test = COCO(test_data.path.to_list(),
                      test_data.captions.to_list(),
                      transform, tokenizer)
 
-train_dataloader = torch.utils.data.DataLoader(VizWiz_train, batch_size=16, shuffle=True, drop_last=True)
-test_dataloader = torch.utils.data.DataLoader(VizWiz_test, batch_size=16, shuffle=True, drop_last=True)
+train_dataloader = torch.utils.data.DataLoader(COCO_train, batch_size=16, shuffle=True, drop_last=True)
+test_dataloader = torch.utils.data.DataLoader(COCO_test, batch_size=16, shuffle=True, drop_last=True)
 
 def create_masks_decoder(tar):
     look_ahead_mask = create_look_ahead_mask(tar.size(1)).to(device)
@@ -90,7 +91,7 @@ def evaluate(model, val_loader):
 if __name__ == "__main__":
     feature_extractor = vt_resnet50(
             pretrained=True,
-            freeze='full_freeze',
+            freeze='full_freeze', # only freezes resnet
             tokens=16,
             token_channels=128,
             input_dim=1024,

@@ -29,5 +29,4 @@ class Encoder(nn.Module):
       
       for i in range(self.num_layers):
          x = self.enc_layers[i](x, mask)
-
       return x # (batch_size, input_seq_len, d_model)

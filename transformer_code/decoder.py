@@ -31,5 +31,4 @@ class Decoder(nn.Module):
          
          attention_weights['decoder_layer{}_block1'.format(i+1)] = block1
          attention_weights['decoder_layer{}_block2'.format(i+1)] = block2
-
       return x, attention_weights
