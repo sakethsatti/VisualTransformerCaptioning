@@ -117,7 +117,7 @@ if __name__ == "__main__":
         model.load_state_dict(torch.load('VTResCaptioner.pt'))
         with open("full_history.json", "r") as f:
             full_history = json.load(f)
-        start_epoch = len(full_history['train_loss'])
+        start_epoch = len(full_history['train_loss']) - 1
 
     else:
         full_history = {'train_loss': [], 'train_accuracy': [], 'val_loss': [], 'val_accuracy': []}
